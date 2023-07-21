@@ -14,6 +14,12 @@
 #define COMMAND_PRINT_TASKS 'p'
 #define COMMAND_INCREASE_PRIORITY 'i'
 #define COMMAND_PRINT_TASKS_COUNT 'n'
+#define COMMAND_COMPLETE_TASK 'c'
+#define COMMAND_PRINT_COMPLETE_TASK 'P'
+#define COMMAND_ESTIMATE_TIME 'e'
+#define COMMAND_DELETE_TASK 'd'
+#define COMMAND_FINISH_DAY 'f'
+#define COMMAND_REPEATABLE_TASK 'r'
 #define COMMAND_END 'D'
 
 enum priority { LOW,
@@ -24,7 +30,7 @@ struct task {
     char task_name[MAX_TASK_LENGTH];
     char category[MAX_CATEGORY_LENGTH];
     enum priority priority;
-
+    int is_repeatable;
     struct task *next;
 };
 
@@ -56,6 +62,12 @@ void parse_add_task_line(
     char buffer[MAX_STRING_LENGTH], char task_name[MAX_TASK_LENGTH],
     char task_category[MAX_CATEGORY_LENGTH], enum priority *prio);
 void parse_task_category_line(
+    char buffer[MAX_STRING_LENGTH], char task_name[MAX_TASK_LENGTH],
+    char task_category[MAX_CATEGORY_LENGTH]);
+void parse_delete_task_line(
+    char buffer[MAX_STRING_LENGTH], char task_name[MAX_TASK_LENGTH],
+    char task_category[MAX_CATEGORY_LENGTH]);
+void parse_repeat_task_line(
     char buffer[MAX_STRING_LENGTH], char task_name[MAX_TASK_LENGTH],
     char task_category[MAX_CATEGORY_LENGTH]);
 void parse_complete_task_line(
@@ -107,7 +119,7 @@ void add_task(const char *name_str, const char *category_str, char *prio_str) {
     // printf("Task %s added successfully.\n", name_str);
 }
 
-void print_todo_list() {
+void print_tasks() {
     if (todo->tasks == NULL) {
         printf("==== Your ToDo List ====\n");
         printf("All tasks completed, you smashed it!\n");
@@ -124,6 +136,24 @@ void print_todo_list() {
         task_num++;
     }
     printf("====   That's it!   ====\n");
+}
+
+void print_completed_tasks() {
+    if (todo->completed_tasks == NULL) {
+        printf("==== Completed Tasks ====\n");
+        printf("No tasks have been completed today!\n");
+        printf("=========================\n");
+        return;
+    }
+
+    struct completed_task *current_completed_task = todo->completed_tasks;
+
+    printf("==== Completed Tasks ====\n");
+    while (current_completed_task != NULL) {
+        print_completed_task(current_completed_task);
+        current_completed_task = current_completed_task->next;
+    }
+    printf("=========================\n");
 }
 
 void increase_task_priority(const char *name_str, const char *category_str) {
@@ -167,6 +197,167 @@ void print_tasks_count() {
         current_task = current_task->next;
     }
     printf("There are %d items on your list!\n", count);
+}
+
+void add_completed_task(const char *name_str, const char *category_str, int start_time, int finish_time) {
+    struct task *current_task = todo->tasks;
+    struct task *prev_task = NULL;
+    struct task *task_to_move = NULL;
+
+    // Search for the task with name_str and category_str
+    while (current_task != NULL) {
+        if (strcmp(current_task->task_name, name_str) == 0 && strcmp(current_task->category, category_str) == 0) {
+            task_to_move = current_task;
+            break;
+        }
+        prev_task = current_task;
+        current_task = current_task->next;
+    }
+
+    // If the task is found, remove it from the tasks list
+    if (task_to_move != NULL) {
+        // Remove the task from the tasks list
+        if (prev_task == NULL) {
+            todo->tasks = task_to_move->next; // The task to move is the first in the list
+        } else {
+            prev_task->next = task_to_move->next;
+        }
+
+        // Create a new completed_task and wrap the task to move into it
+        struct completed_task *new_completed_task = (struct completed_task *)malloc(sizeof(struct completed_task));
+        new_completed_task->task = task_to_move;
+        new_completed_task->start_time = start_time;
+        new_completed_task->finish_time = finish_time;
+
+        // Add the completed_task to the head of the completed_tasks list
+        new_completed_task->next = todo->completed_tasks;
+        todo->completed_tasks = new_completed_task;
+
+        // printf("Task '%s' in category '%s' marked as completed and added to completed tasks.\n", name_str, category_str);
+    } else {
+        printf("Could not find task '%s' in category '%s'.\n", name_str, category_str);
+    }
+}
+
+void estimate_completion_time() {
+    printf("Expected completion time for remaining tasks:\n");
+    struct task *current_task = todo->tasks;
+
+    int task_count = 1;
+
+    while (current_task != NULL) {
+        // Initialize variables to calculate average completion time
+        int count = 0;
+        int total_time = 0;
+
+        struct completed_task *current_completed_task = todo->completed_tasks;
+
+        while (current_completed_task != NULL) {
+            // Check if the completed task belongs to the same category as the current task
+            if (strcmp(current_completed_task->task->category, current_task->category) == 0) {
+                count++;
+                total_time += current_completed_task->finish_time - current_completed_task->start_time;
+                // We can Cache the total_time for each cayegory to reduce execution time
+            }
+            current_completed_task = current_completed_task->next;
+        }
+
+        // If no tasks in the same category are completed, set the priority to 100 by default
+        int average_time = 100;
+
+        // Calculate the average completion time and update the current task's priority
+        if (count > 0) {
+            average_time = total_time / count;
+        }
+
+        print_one_task(task_count, current_task);
+        printf("Expected completion time: %d minutes\n", average_time);
+
+        current_task = current_task->next;
+        task_count++;
+    }
+}
+
+// Function to delete a task from the todo list
+void delete_task(const char *name_str, const char *category_str) {
+    // Check if the list is empty
+    if (todo->tasks == NULL) {
+        printf("No tasks in the list. Cannot delete.\n");
+        return;
+    }
+
+    struct task *prev_task = NULL;
+    struct task *current_task = todo->tasks;
+
+    // Search for the task with the given name_str and category_str
+    while (current_task != NULL) {
+        if (strcmp(current_task->task_name, name_str) == 0 && strcmp(current_task->category, category_str) == 0) {
+            // Task found, remove it from the list
+
+            // Update the previous task's next pointer to skip the current task
+            if (prev_task != NULL) {
+                prev_task->next = current_task->next;
+            } else {
+                // If the current task is the first node, update the list head
+                todo->tasks = current_task->next;
+            }
+
+            // Free the memory allocated for the deleted task
+            free(current_task);
+
+            // printf("Task '%s' in category '%s' deleted successfully.\n", name_str, category_str);
+            return;
+        }
+
+        prev_task = current_task;
+        current_task = current_task->next;
+    }
+    printf("Could not find task '%s' in category '%s'.\n", name_str, category_str);
+}
+
+void finish_day() {
+    struct completed_task *current_completed_task = todo->completed_tasks;
+
+    while (current_completed_task != NULL) {
+        struct completed_task *next_completed_task = current_completed_task->next;
+ 
+
+        if (current_completed_task->task->is_repeatable) {
+            add_task(current_completed_task->task->task_name, current_completed_task->task->category, current_completed_task->task->priority);
+        }
+
+        free(current_completed_task);
+        current_completed_task = next_completed_task;
+    }
+
+    // Set the completed_tasks pointer to NULL to indicate an empty list
+    todo->completed_tasks = NULL;
+
+    // printf("All completed tasks have been deleted.\n");
+}
+
+void repeat_task(const char *name_str, const char *category_str) {
+    // Check if the list is empty
+    if (todo->tasks == NULL) {
+        printf("No tasks in the list. Cannot repeat.\n");
+        return;
+    }
+
+    struct task *current_task = todo->tasks;
+
+    // Search for the task with the given name_str and category_str
+    while (current_task != NULL) {
+        if (strcmp(current_task->task_name, name_str) == 0 && strcmp(current_task->category, category_str) == 0) {
+            // Task found, mark it as repeatable
+            current_task->is_repeatable = 1;
+
+            // printf("Task '%s' in category '%s' marked as repeatable.\n", name_str, category_str);
+            return;
+        }
+        current_task = current_task->next;
+    }
+
+    printf("Could not find task '%s' in category '%s'.\n", name_str, category_str);
 }
 
 int main(void) {
@@ -220,7 +411,7 @@ void command_loop(struct todo_list *todo) {
             enum priority task_priority;
             parse_add_task_line(buffer, task_name, task_category, &task_priority);
         } else if (command == COMMAND_PRINT_TASKS) {
-            print_todo_list();
+            print_tasks();
         } else if (command == COMMAND_INCREASE_PRIORITY) {
             // Fetch `[task] [category]` from stdin
             char buffer[MAX_STRING_LENGTH];
@@ -233,6 +424,43 @@ void command_loop(struct todo_list *todo) {
             parse_task_category_line(buffer, task, category);
         } else if (command == COMMAND_PRINT_TASKS_COUNT) {
             print_tasks_count();
+        } else if (command == COMMAND_COMPLETE_TASK) {
+            // Fetch `[task] [category] [start_time] [finish_time]` from stdin
+            char buffer[MAX_STRING_LENGTH];
+            fgets(buffer, MAX_STRING_LENGTH, stdin);
+            // Create strings for `task`/`category` and ints for times, then populate
+            // them using the contents of `buffer`.
+            char task[MAX_TASK_LENGTH];
+            char category[MAX_CATEGORY_LENGTH];
+            int start_time;
+            int finish_time;
+            parse_complete_task_line(buffer, task, category, &start_time, &finish_time);
+        } else if (command == COMMAND_PRINT_COMPLETE_TASK) {
+            print_completed_tasks();
+        } else if (command == COMMAND_ESTIMATE_TIME) {
+            estimate_completion_time();
+        } else if (command == COMMAND_DELETE_TASK) {
+            // Fetch `[task] [category]` from stdin
+            char buffer[MAX_STRING_LENGTH];
+            fgets(buffer, MAX_STRING_LENGTH, stdin);
+
+            // Create strings for `task`/`category` and populate them using the contents
+            // of `buffer`
+            char task[MAX_TASK_LENGTH];
+            char category[MAX_CATEGORY_LENGTH];
+            parse_delete_task_line(buffer, task, category);
+        } else if (command == COMMAND_FINISH_DAY) {
+            finish_day();
+        } else if (command == COMMAND_REPEATABLE_TASK) {
+            // Fetch `[task] [category]` from stdin
+            char buffer[MAX_STRING_LENGTH];
+            fgets(buffer, MAX_STRING_LENGTH, stdin);
+
+            // Create strings for `task`/`category` and populate them using the contents
+            // of `buffer`
+            char task[MAX_TASK_LENGTH];
+            char category[MAX_CATEGORY_LENGTH];
+            parse_repeat_task_line(buffer, task, category);
         } else if (command == COMMAND_END) {
             return;
         }
@@ -347,6 +575,58 @@ void parse_task_category_line(
     increase_task_priority(name_str, category_str);
 }
 
+void parse_delete_task_line(
+    char buffer[MAX_STRING_LENGTH],
+    char task_name[MAX_TASK_LENGTH],
+    char task_category[MAX_CATEGORY_LENGTH]) {
+    remove_newline(buffer);
+
+    // Extract value 1 as string
+    char *name_str = strtok(buffer, " ");
+    if (name_str != NULL) {
+        strcpy(task_name, name_str);
+    }
+
+    // Extract value 2 as string
+    char *category_str = strtok(NULL, " ");
+    if (category_str != NULL) {
+        strcpy(task_category, category_str);
+    }
+
+    if (name_str == NULL || category_str == NULL) {
+        // If any of these are null, there were not enough words.
+        printf("Could not properly parse line: '%s'.\n", buffer);
+    }
+
+    delete_task(name_str, category_str);
+}
+
+void parse_repeat_task_line(
+    char buffer[MAX_STRING_LENGTH],
+    char task_name[MAX_TASK_LENGTH],
+    char task_category[MAX_CATEGORY_LENGTH]) {
+    remove_newline(buffer);
+
+    // Extract value 1 as string
+    char *name_str = strtok(buffer, " ");
+    if (name_str != NULL) {
+        strcpy(task_name, name_str);
+    }
+
+    // Extract value 2 as string
+    char *category_str = strtok(NULL, " ");
+    if (category_str != NULL) {
+        strcpy(task_category, category_str);
+    }
+
+    if (name_str == NULL || category_str == NULL) {
+        // If any of these are null, there were not enough words.
+        printf("Could not properly parse line: '%s'.\n", buffer);
+    }
+
+    repeat_task(name_str, category_str);
+}
+
 /*
  * Helper Function
  * You DO NOT NEED TO UNDERSTAND THIS FUNCTION, and will not need to change it.
@@ -394,6 +674,8 @@ void parse_complete_task_line(
         // If any of these are null, there were not enough words.
         printf("Could not properly parse line: '%s'.\n", buffer);
     }
+
+    add_completed_task(name_str, category_str, *start_time, *finish_time);
 }
 
 /**
