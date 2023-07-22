@@ -1,4 +1,4 @@
-This assignment will test your ability to create, use, manipulate and solve problems using linked lists. To do this, the todo list is implemented as a linked list of tasks, and another separate linked list is used to keep track of your “completed tasks”.
+To create, use, manipulate and solve problems using linked lists. To do this, the todo list is implemented as a linked list of tasks, and another separate linked list is used to keep track of your “completed tasks”.
 
 ## Compile and Run
 ```gcc cs_todo.c -o cs_todo```
