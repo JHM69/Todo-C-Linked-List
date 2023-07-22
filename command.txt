@@ -1,0 +1,87 @@
+a progress_checkup meetings medium
+r progress_checkup meetings
+c progress_checkup meetings 600 660
+f
+p
+r progress_checkup meetings
+c progress_checkup meetings 600 660
+f
+p
+P
+
+
+
+a bed c low
+a bid c low
+a fed c low
+a bot c high
+a bad c medium
+m b?d
+
+
+
+a bed c low
+a bid c low
+a fed c low
+a bot c high
+a bad c medium
+m [bf][ei]d
+
+
+
+a todo c low
+a ato c low
+a toodoo c low
+a too c low
+a top c low
+a to c low
+a troll c low
+m t*o
+
+
+
+a read_stage4 comp1511 low
+a complete_stage1 comp1511 high
+a read_and_complete_stage2 comp1511 high
+a read_and_complete_stage3 comp1511 medium
+a read_book personal low
+a bread_staged personal low
+a read_staged_event personal low
+m read?*stage[1234d]
+
+a bed c low
+a bid c low
+a fed c low
+a bot c high
+a bad c medium
+^ b?d
+p
+
+
+sort 
+
+a clarify_deadlines meetings low
+a design_exercise meetings high
+a discuss_assignment meetings medium
+
+4.3.2
+a design_lab meetings high
+a make_coffee food_n_drink high
+a discuss_assignment meetings medium
+a eat_lunch food_n_drink medium
+a clarify_deadlines meetings low
+a design_exercise meetings high
+
+
+
+a organise_meeting admin high
+a mark_assignments 1511 high
+a buy_milk home medium
+p     
+c mark_assignments 1511 600 720
+p
+c buy_milk home 750 780
+p
+c organise_meeting admin 900 920
+p
+
