@@ -1,4 +1,4 @@
-To create, use, manipulate and solve problems using linked lists. To do this, the todo list is implemented as a linked list of tasks, and another separate linked list is used to keep track of your “completed tasks”.
+To create, use, manipulate and solve problems using linked lists. To do this, the todo list is implemented as a linked list of tasks, and another separate linked list is used to keep track of our “completed tasks”.
 
 ## Compile and Run
 ```gcc cs_todo.c -o cs_todo```
@@ -6,7 +6,7 @@ To create, use, manipulate and solve problems using linked lists. To do this, th
 ```./cs_todo```
 
 ## Stage 1
-For stage 1 of this assignment, you will be creating a basic structure for CS ToDo. This will include:
+For stage 1 of this assignment, we will be creating a basic structure for CS ToDo. This will include:
 
   - Setting up an empty todo list
   - Adding tasks to the todo list:
@@ -17,14 +17,14 @@ For stage 1 of this assignment, you will be creating a basic structure for CS To
 
 
 ## Stage 2
-For stage 2 of this assignment, you will apply more advanced linked list knowledge by using the second separate list of completed tasks. This stage will involve:
+For stage 2 of this assignment, we will apply more advanced linked list knowledge by using the second separate list of completed tasks. This stage will involve:
 
   - Completion of tasks
   - Printing of completed tasks
   - Estimated completion time of current tasks based on completed tasks
 
 ## Stage 3
-For stage 3 of this assignment, you will add the ability to delete tasks from the list (free task-associated memory to avoid memory leaks), as well as allow repetition of tasks day-to-day.
+For stage 3 of this assignment, we will add the ability to delete tasks from the list (free task-associated memory to avoid memory leaks), as well as allow repetition of tasks day-to-day.
 
 Specific tasks involve:
 
@@ -34,7 +34,7 @@ Specific tasks involve:
   - Deleting the entire todo list
 
 ## Stage 4
-For stage 4 of this assignment, you will be doing even more advanced things with your todo list, including:
+For stage 4 of this assignment, we will be doing even more advanced things with your todo list, including:
 
   - Pattern matching on task names
   - Deleting all tasks matching this pattern
